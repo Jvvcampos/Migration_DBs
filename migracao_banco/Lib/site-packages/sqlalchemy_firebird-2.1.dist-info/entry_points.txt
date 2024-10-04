@@ -1,0 +1,8 @@
+[console_scripts]
+prepare-test-environment = sqlalchemy_firebird:infrastructure.prepare_test_environment
+rebuild-test-databases = sqlalchemy_firebird:infrastructure.rebuild_test_databases
+
+[sqlalchemy.dialects]
+firebird = sqlalchemy_firebird.firebird:FBDialect_firebird
+firebird.fdb = sqlalchemy_firebird.fdb:FBDialect_fdb
+firebird.firebird = sqlalchemy_firebird.firebird:FBDialect_firebird
