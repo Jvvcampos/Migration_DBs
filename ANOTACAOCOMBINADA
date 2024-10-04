@@ -1,0 +1,87 @@
+import sqlite3
+
+# Mapeamento de tabelas e colunas
+mapa_tabelas = {
+    'CORES': {
+        'tabela_destino': 'PROD01_COR',
+        'colunas': {
+            'COR': 'COD_COR',
+            'DESCRICAO': 'NOME_COR'
+        }
+    },
+    'TAMANHOS': {
+        'tabela_destino': 'PROD01_COR',
+        'colunas': {
+            'TAMANHO': 'COD_TAMANHO',
+            'DESCRICAO_TAMANHO': 'NOME_TAMANHO'
+        }
+    }
+    # Adicione mais mapeamentos conforme necessário
+}
+
+# Função para extrair dados de uma tabela de origem
+def extrair_dados(cursor, tabela_origem, colunas_origem):
+    cursor.execute(f"SELECT {', '.join(colunas_origem)} FROM {tabela_origem}")
+    return cursor.fetchall()
+
+# Função para combinar dados de múltiplas tabelas
+def combinar_dados(mapa_tabelas, cursor):
+    dados_combinados = {}
+
+    for tabela_origem, info in mapa_tabelas.items():
+        colunas_origem = list(info['colunas'].keys())
+        colunas_destino = list(info['colunas'].values())
+
+        resultados = extrair_dados(cursor, tabela_origem, colunas_origem)
+
+        for linha in resultados:
+            for i, coluna_destino in enumerate(colunas_destino):
+                if coluna_destino not in dados_combinados:
+                    dados_combinados[coluna_destino] = []
+                dados_combinados[coluna_destino].append(linha[i])
+
+    return dados_combinados
+
+# Função para inserir dados na tabela de destino
+def inserir_dados(cursor, tabela_destino, dados_combinados):
+    colunas_destino = ', '.join(dados_combinados.keys())
+    for i in range(len(next(iter(dados_combinados.values())))):
+        valores = tuple(dados_combinados[coluna][i] for coluna in dados_combinados.keys())
+        cursor.execute(f"INSERT INTO {tabela_destino} ({colunas_destino}) VALUES ({', '.join(['?'] * len(valores))})", valores)
+
+# Função principal
+def processar_mapeamento(mapa_tabelas, caminho_banco_dados):
+    conn = sqlite3.connect(caminho_banco_dados)
+    cursor = conn.cursor()
+
+    dados_combinados = combinar_dados(mapa_tabelas, cursor)
+
+    for tabela_origem, info in mapa_tabelas.items():
+        tabela_destino = info['tabela_destino']
+        inserir_dados(cursor, tabela_destino, dados_combinados)
+
+    conn.commit()
+    conn.close()
+
+# Executar a função principal
+processar_mapeamento(mapa_tabelas, 'seu_banco_de_dados.db')
+
+
+,
+    'PRODUTOS': {
+        'tabela_destino' : 'PROD01',
+        'colunas': {
+            'CUSTO' : 'CUSTO',
+            ''
+        },
+        'generator': 'GEN_PROD01'
+    }
+    
+    
+        'CORES': {
+        'tabela_destino': 'PROD01_COR',
+        'colunas': {
+            'COR' : 'COD_COR',
+            'DESCRICAO': 'NOME_COR'
+        }
+    },
