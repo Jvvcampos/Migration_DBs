@@ -1,18 +1,22 @@
 from sqlalchemy import create_engine, MetaData
+import sqlalchemy_firebird.fdb as fdb
 from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.dialects import registry
 from sqlalchemy.orm import sessionmaker
 
-# Conexão com os bancos de dados
-engine_origem = create_engine('mysql+pymysql://usuario:senha@host:porta/banco_origem')
-engine_destino = create_engine('postgresql://usuario:senha@host:porta/banco_destino')
+registry.register("firebird.fdb", "sqlalchemy_firebird.fdb", "FBDialect_fdb")
 
+# Conexão com os bancos de dados
+#db_uri = "firebird+firebird://sysdba@/c:/projects/databases/my_project.fdb?charset=UTF8&fb_client_library=c:/projects/databases/fb40_svr/fbclient.dll"
+engine_origem = create_engine('firebird+fdb://127.0.0.1:3050/C:\\winsae\\DVERAS')
+engine_destino = create_engine('firebird+fdb://SYSDBA:masterkey@127.0.0.1:3050/C:\\Users\\admin\\Desktop\\WINSAE.GDB')
 # Refletir a estrutura do banco de dados de origem
 BaseOrigem = automap_base()
-BaseOrigem.prepare(engine_origem, reflect=True)
+BaseOrigem.prepare(autoload_with=engine_origem)
 
 # Refletir a estrutura do banco de dados de destino
 BaseDestino = automap_base()
-BaseDestino.prepare(engine_destino, reflect=True)
+BaseDestino.prepare(autoload_with=engine_destino)
 
 # Sessões
 SessionOrigem = sessionmaker(bind=engine_origem)
@@ -22,20 +26,11 @@ session_destino = SessionDestino()
 
 # Mapeamento de tabelas e colunas
 mapa_tabelas = {
-    'tabela_origem1': {
-        'tabela_destino': 'tabela_destino1',
+    'CORES': {
+        'tabela_destino': 'PROD01_COR',
         'colunas': {
-            'id': 'id',
-            'nome': 'nome_completo',
-            'valor': 'preco'
-        }
-    },
-    'tabela_origem2': {
-        'tabela_destino': 'tabela_destino2',
-        'colunas': {
-            'codigo': 'codigo_produto',
-            'descricao': 'descricao_produto',
-            'quantidade': 'quantidade_estoque'
+            'COR': 'COD_COR',
+            'DESCRICAO': 'NOME_COR'
         }
     }
     # Adicione mais mapeamentos conforme necessário

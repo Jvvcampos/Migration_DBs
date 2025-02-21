@@ -22,16 +22,14 @@ mapa_tabelas = {
         'PROD01_COR': {
             'tabela_destino': 'PROD01_COR',
             'colunas': {
-                'DESCRICAO': 'NOME_COR',
-            },
-            'generator': 'GEN_PROD01_COR_ID'
-        }
-    },
-    'PRODUTOS':{
-        'PROD01': {
-            'tabela_destino': 'PROD01',
+                'COR': 'COD_COR',
+                'DESCRICAO': 'NOME_COR'
+            }
+        },
+        'NCM': {
+            'tabela_destino': 'NCM',
             'colunas': {
-                'CUSTO': 'CUSTO'
+                'NCM': 'COD_NCM'
             }
         }
     }
@@ -51,26 +49,27 @@ def gerar_codigo_firebird(generator_name):
     cur_destino.execute(f"SELECT GEN_ID({generator_name}, 1) FROM RDB$DATABASE")
     return cur_destino.fetchone()[0]
     
-def migrar_dados(tabela_origem_nome, tabelas_destino, colunas_mapeamento, generator_name=None):
+def migrar_dados(tabelas_origem_nome, tabelas_destino, colunas_mapeamento, generator_name=None):
     # Extração de dados da tabela de origem
-    cur_origem.execute(f"SELECT {', '.join(colunas_mapeamento.keys())} FROM {tabela_origem_nome}")
-    dados_origem = cur_origem.fetchall()
+    for tabela_origem_nome in tabelas_origem_nome:
+        cur_origem.execute(f"SELECT {', '.join(colunas_mapeamento.keys())} FROM {tabela_origem_nome}")
+        dados_origem = cur_origem.fetchall()
 
-    for tabela_destino_nome in tabelas_destino:
-        for dado in dados_origem:
+        for tabela_destino_nome in tabelas_destino:
+            for dado in dados_origem:
         
-            # Criação da query de inserção
-            colunas_destino = ', '.join(colunas_mapeamento.values())
-            valores_destino = ', '.join(['?'] * len(colunas_mapeamento))
+                # Criação da query de inserção
+                colunas_destino = ', '.join(colunas_mapeamento.values())
+                valores_destino = ', '.join(['?'] * len(colunas_mapeamento))
         
-            # Execução da query de inserção
-            if generator_name: # Gerar código Firebird usando o generator específico
-                query = f"INSERT INTO {tabela_destino_nome} ({colunas_destino}, COD_COR) VALUES ({valores_destino}, ?)"
-                codigo = gerar_codigo_firebird(generator_name)
-                cur_destino.execute(query, list(dado) + [codigo])
-            else:
-                query = f"INSERT INTO {tabela_destino_nome} ({colunas_destino}) VALUES ({valores_destino})"
-                cur_destino.execute(query, list(dado))
+                # Execução da query de inserção
+                if generator_name: # Gerar código Firebird usando o generator específico
+                    query = f"INSERT INTO {tabela_destino_nome} ({colunas_destino}, COD_COR) VALUES ({valores_destino}, ?)"
+                    codigo = gerar_codigo_firebird(generator_name)
+                    cur_destino.execute(query, list(dado) + [codigo])
+                else:
+                    query = f"INSERT INTO {tabela_destino_nome} ({colunas_destino}) VALUES ({valores_destino})"
+                    cur_destino.execute(query, list(dado))
             
     # Commit das transações
     con_destino.commit()
@@ -78,9 +77,10 @@ def migrar_dados(tabela_origem_nome, tabelas_destino, colunas_mapeamento, genera
 # Executar a migração para cada tabela mapeada
 for tabela_origem, mapeamento in mapa_tabelas.items():
     generator_name = mapeamento.get('generator')  # Obtém o valor do generator ou None se não existir
+    tabelas_origem_nome = [tabela_origem] if isinstance(tabela_origem, str) else tabela_origem
     tabelas_destino = [mapeamento['tabela_destino']] if isinstance(mapeamento['tabela_destino'], str) else mapeamento['tabela_destino']
 
-    migrar_dados(tabela_origem, tabelas_destino, mapeamento['colunas'], generator_name)
+    migrar_dados(tabelas_origem_nome, tabelas_destino, mapeamento['colunas'], generator_name)
 
 # Fechar conexões
 con_origem.close()
